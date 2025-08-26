@@ -216,7 +216,7 @@ header {
 
 .login-section {
   padding: 50px 40px;
-  background: rgba(28, 53, 45, 0.95);
+  background:var(--deep-forest);
   box-shadow: none; 
 }
 
