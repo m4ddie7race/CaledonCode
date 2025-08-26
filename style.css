@@ -16,12 +16,14 @@
 
 body {
   font-family: 'Nunito Sans', sans-serif;
-  background: linear-gradient(140deg, var(--deep-forest) 29%,#1C352D  100%);
+  background: linear-gradient(140deg,#014421 29%,#1C352D  100%);
   color: white;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow-x:hidden;
+  width: 100%;
   
 }
 
@@ -90,9 +92,10 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
   z-index: 1;
-  margin-top: 40px;
+  margin-top: 2.5em;
+  padding: 0 1rem;
 }
 header {
   text-align: center;
@@ -111,6 +114,8 @@ header {
   font-style: italic;
   color: var(--warm-white);
   font-size: 3.1rem;
+  word-wrap: break-word;
+  max-width: 100%;
 }
 .logo-symbol {
   font-size: 4rem;
@@ -139,20 +144,37 @@ header {
   display: grid;
   grid-template-columns: 1fr 1.2fr; /* left brand | right login */
   align-items: stretch;
-  width: min(900px, 96vw);
+  width: min(56.25em, 96vw);
   background: rgba(254, 209, 106, 0.15);
-  border-radius: 20px;
+  border-radius: 1.25em;
   max-width: 100%; 
-  overflow: hidden;
+  overflow: visible;
   margin: 0 auto;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-sizing: border-box;
 }
 
 
 @media (max-width: 900px) {
   .login-container {
     grid-template-columns: 1fr;
-    width: 100vw;
+    width: 96vw;
+    margin: auto;
+  }
+  .brand-section {
+    border-radius: 20px 20px 0 0;
+    padding: 30px 20px;
+  }
+  .login-section {
+    border-radius: 0 0 20px 20px;
+    padding: 30px 20px;
+  }
+}
+/* Keep your existing mobile query */
+@media (max-width: 900px) {
+  .login-container {
+    grid-template-columns: 1fr;
+    width: 96vw;
     margin: auto;
   }
   .brand-section {
@@ -163,7 +185,18 @@ header {
   }
 }
 
-  
+/* ADD this new query for wide screens */
+@media (min-width: 1600px) {
+  .login-container {
+    width: min(70em, 80vw); /* Slightly larger on big screens */
+  }
+  .tagline {
+    font-size: 2.8rem; /* Slightly smaller on big screens */
+  }
+  .container {
+    padding: 0 2rem; /* More padding on wide screens */
+  }
+}
 .brand-section {
   padding: 50px 40px;
   background: rgba(0,0,0,0.15);
@@ -184,7 +217,7 @@ header {
 .login-section {
   padding: 50px 40px;
   background: rgba(28, 53, 45, 0.95);
-  box-shadow: none; /* keep the shadow on the outer container instead */
+  box-shadow: none; 
 }
 
 .form-group {
@@ -196,7 +229,7 @@ header {
 .form-group label {
   font-weight: 600;
   margin-bottom: 6px;
-  color:#FFF4A4 ; /* darker label text */
+  color:#FFF4A4 ; 
 }
 
 .form-group input {
