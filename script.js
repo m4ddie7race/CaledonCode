@@ -320,3 +320,188 @@ for (let i = 0; i < totalSymbols; i++) {
     }
   });
 
+// A complete, self-contained backend system for login authentication,
+// session handling, and database integration using Firebase.
+
+// --- 1. Library Imports ---
+// Import all necessary Firebase functions directly from the CDN.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// --- 2. Global Variables and Configuration ---
+// These variables are provided by the hosting environment. Do not edit them.
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// --- 3. Firebase Service Initialization ---
+// Initialize Firebase services and get references to Auth and Firestore.
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- 4. DOM Element References ---
+// Get references to the HTML elements we will interact with.
+const form = document.getElementById("loginForm");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const messageBox = document.getElementById("messageBox");
+
+// --- 5. Authentication and Session Handling ---
+
+/**
+ * Handles the initial sign-in process upon page load.
+ * Tries to sign in with a custom token or anonymously if no token is available.
+ * This ensures the user's session is always active.
+ */
+async function handleInitialSignIn() {
+  try {
+    if (initialAuthToken) {
+      await signInWithCustomToken(auth, initialAuthToken);
+      console.log("Signed in with custom token.");
+    } else {
+      await signInAnonymously(auth);
+      console.log("Signed in anonymously.");
+    }
+  } catch (error) {
+    console.error("Error during initial sign-in:", error);
+    showMessage("Failed to start session. Please refresh the page.", 'error');
+  }
+}
+
+// Attach a listener to track the user's authentication state.
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // User is signed in.
+    const userId = user.uid;
+    console.log("Authentication state changed. User is signed in with UID:", userId);
+    // Fetch or create the user's profile in the database.
+    await fetchOrCreateUserProfile(userId);
+
+    // This is where you would typically handle session management.
+    // Since Firebase Auth handles sessions automatically, we just need to react
+    // to the authenticated state. For example, by redirecting the user
+    // or enabling access to protected parts of the app.
+
+  } else {
+    // User is signed out.
+    console.log("Authentication state changed. User is signed out.");
+    // Handle the signed-out state, e.g., redirect to the login page.
+  }
+});
+
+// --- 6. Database Integration (Firestore) ---
+
+/**
+ * Fetches the user's profile from Firestore or creates a new one if it doesn't exist.
+ * This is crucial for integrating Auth with your database.
+ * @param {string} uid The user's unique ID from Firebase Authentication.
+ */
+async function fetchOrCreateUserProfile(uid) {
+  try {
+    const userProfileRef = doc(db, `artifacts/${appId}/users/${uid}/userData/profile`);
+    const userProfileSnap = await getDoc(userProfileRef);
+
+    if (userProfileSnap.exists()) {
+      const profileData = userProfileSnap.data();
+      console.log("Existing user profile found:", profileData);
+      showMessage(`Welcome back, ${profileData.email}!`, 'success');
+      // Update last login timestamp
+      await setDoc(userProfileRef, { lastLoginAt: serverTimestamp() }, { merge: true });
+    } else {
+      // Create a new profile for the user.
+      const email = auth.currentUser.email || 'anonymous';
+      const newProfile = {
+        email: email,
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
+      };
+      await setDoc(userProfileRef, newProfile);
+      console.log("New user profile created.");
+      showMessage(`New account created! Welcome, ${email}!`, 'success');
+    }
+  } catch (e) {
+    console.error("Error fetching or creating user profile:", e);
+    showMessage("An error occurred with your profile.", 'error');
+  }
+}
+
+// --- 7. API Endpoints and Business Logic ---
+// We don't have traditional REST API endpoints here. Instead, our "API"
+// is the form submission handler that calls Firebase Auth functions directly.
+
+/**
+ * Handles the login form submission.
+ * This is our primary "login endpoint" for the front end.
+ */
+async function handleLoginSubmission(e) {
+  e.preventDefault(); // Prevent the default form submission and page reload.
+
+  const email = emailInput.value;
+  const password = passwordInput.value;
+
+  // Basic client-side validation
+  if (!email || !password) {
+    showMessage("Please enter both email and password.", 'error');
+    return;
+  }
+
+  try {
+    // Use Firebase Auth to sign in the user.
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    console.log("User successfully logged in:", user.uid);
+    
+    // The onAuthStateChanged listener will handle the rest of the flow
+    // (fetching/creating the profile, showing success message).
+    showMessage("Login successful! Redirecting...", 'success');
+
+    // You can add a redirect here, for example:
+    // window.location.href = "/dashboard";
+
+  } catch (error) {
+    // Error handling based on Firebase Auth error codes.
+    console.error("Login failed:", error.message);
+    let errorMessage = "An unknown error occurred. Please try again.";
+    switch(error.code) {
+      case 'auth/invalid-email':
+        errorMessage = "Invalid email address format.";
+        break;
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        errorMessage = "Incorrect email or password. Please try again.";
+        break;
+      case 'auth/user-disabled':
+        errorMessage = "This account has been disabled.";
+        break;
+      default:
+        errorMessage = `Login failed. Error: ${error.message}`;
+        break;
+    }
+    showMessage(errorMessage, 'error');
+  }
+}
+
+// --- 8. Event Listeners ---
+// Add the event listener for the form submission.
+form.addEventListener("submit", handleLoginSubmission);
+
+// --- 9. Utility Functions ---
+
+/**
+ * Displays a message to the user in a styled box.
+ * @param {string} text The message to display.
+ * @param {string} type The type of message ('success' or 'error').
+ */
+function showMessage(text, type) {
+  messageBox.textContent = text;
+  messageBox.className = `message-box show ${type}`;
+  setTimeout(() => {
+    messageBox.classList.remove('show');
+  }, 4000); // Hide the message after 4 seconds
+}
+
+// Start the authentication process when the script loads.
+handleInitialSignIn();
