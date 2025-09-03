@@ -8,57 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const passwordError = document.getElementById("password-error");
   const countryCodeSelect = document.getElementById("countryCode");
   const codeBackground = document.getElementById("codeBackground");
-
+  
 
 navToggle.addEventListener('click', () => {
   navMenu.classList.toggle('active');
 });
 });
-
-// Logo, Heading, and Subheading Typewriter
-
-// Heading
-const headingText = ["Welcome", "to", "CaledonCode!", "<>"];
-const headingElem = document.getElementById("typewriter-heading");
-headingElem.textContent = "";
-
-// Create spans for each line
-headingText.forEach((line, index) => {
-  const span = document.createElement("span");
-  span.classList.add("line");
-  span.dataset.text = line;
-  span.style.color = "#FED16A"; // <-- change this to any color you want
-  headingElem.appendChild(span);
-
-  // Add a <br> after every line except the last
-  if (index < headingText.length - 1) {
-    headingElem.appendChild(document.createElement("br"));
-  }
-});
-
-const spans = headingElem.querySelectorAll(".line");
-let currentLine = 0;
-let currentChar = 0;
-
-function typeLine() {
-  const span = spans[currentLine];
-  const text = span.dataset.text;
-
-  if (currentChar < text.length) {
-    span.textContent += text[currentChar];
-    currentChar++;
-    setTimeout(typeLine, 100); // typing speed
-  } else {
-    currentLine++;
-    currentChar = 0;
-    if (currentLine < spans.length) {
-      setTimeout(typeLine, 200); // pause before next line
-    }
-  }
-}
-
-// Start typing
-typeLine();
 
 
 
@@ -332,32 +287,16 @@ countries.forEach(c => {
 });
 
 
-  // Background animation (no overlap)
   // Background fill with evenly spaced "<>"
-const colors = ["#FF6B35", "#FED16A"]; // vibrant orange & code yellow
-const cols = 10;  // number of symbols across
-const rows = 10;  // number of symbols down
+const totalSymbols = 144; // 12 columns × 12 rows
 
-for (let row = 0; row < rows; row++) {
-  for (let col = 0; col < cols; col++) {
-    const symbol = document.createElement("div");
-    symbol.className = "code-symbol";
-    symbol.textContent = "<>";
-
-    symbol.style.color = colors[Math.floor(Math.random() * colors.length)];
-    symbol.style.fontSize = "26px";
-    symbol.style.position = "absolute";
-
-    // evenly spaced positions
-    const x = (col + 0.5) * (100 / cols); 
-    const y = (row + 0.5) * (100 / rows);
-
-    symbol.style.left = x + "%";
-    symbol.style.top = y + "%";
-
-    codeBackground.appendChild(symbol);
-  }
+for (let i = 0; i < totalSymbols; i++) {
+  const symbol = document.createElement("span");
+  symbol.className = "code-symbol";
+  symbol.textContent = "<>";
+  codeBackground.appendChild(symbol);
 }
+
 
 
   // Form validation
